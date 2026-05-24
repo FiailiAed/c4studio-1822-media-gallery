@@ -1,14 +1,15 @@
 // @ts-check
 import { defineConfig, fontProviders } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
-import sitemap from '@astrojs/sitemap';
-import robotsTxt from 'astro-robots-txt';
+import vercel from '@astrojs/vercel';
+import clerk from '@clerk/astro';
 
 export default defineConfig({
-  site: 'https://www.example.com',
-  output: 'static',
+  site: 'https://media.1822lax.com',
+  output: 'server',
+  adapter: vercel(),
 
-  integrations: [sitemap(), robotsTxt()],
+  integrations: [clerk()],
 
   fonts: [
     {

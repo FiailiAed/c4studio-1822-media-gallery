@@ -2,66 +2,66 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import Banner from '../components/Banner.astro';
-import CTA from '../components/CTA.astro';
 import { brand } from '../config/brand';
 
 const services = [
   {
-    title: 'General Repairs',
-    description: 'From leaky faucets to broken drywall, our team handles everyday repairs quickly and professionally. We diagnose the issue, explain your options, and get it fixed — no surprises on the bill.',
+    title: 'Event Photography',
+    description: 'Professional action photography at lacrosse games and tournaments. We capture every key moment — goals, saves, hits, and celebrations — in high resolution.',
+    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />',
   },
   {
-    title: 'Installations',
-    description: 'New fixtures, appliances, water heaters, ceiling fans, and more. We ensure every installation is up to code, properly tested, and backed by our workmanship guarantee.',
+    title: 'Highlight Videos',
+    description: 'Edited video highlights from full games or tournaments. Great for recruiting reels, team memories, and social media sharing.',
+    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />',
   },
   {
-    title: 'Inspections',
-    description: 'Comprehensive property inspections for homebuyers, sellers, and proactive homeowners. We identify potential issues before they become expensive emergencies.',
+    title: 'Team Portraits',
+    description: 'Professional team and individual player portraits. Perfect for programs, websites, and season keepsakes.',
+    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />',
   },
   {
-    title: 'Remodeling',
-    description: 'Kitchen and bathroom remodels, basement finishing, and whole-home renovations. We manage the project from design through final walkthrough so you can enjoy the transformation.',
+    title: 'Branded Graphics',
+    description: 'Custom social media graphics, player spotlight cards, and digital signage designed to match your team\'s brand identity.',
+    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />',
   },
   {
-    title: 'Emergency Service',
-    description: 'Burst pipes, electrical outages, and other urgent problems don\'t wait — and neither do we. Our emergency line is staffed 24/7 for rapid response when you need it most.',
+    title: 'Season Packages',
+    description: 'Full-season coverage with a set number of event shoots, gallery access for all players, and end-of-season recap content.',
+    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />',
   },
   {
-    title: 'Maintenance Plans',
-    description: 'Regular preventive maintenance keeps your systems running efficiently and extends their lifespan. Ask about our seasonal service packages for year-round peace of mind.',
+    title: 'Tournament Coverage',
+    description: 'Multi-day tournament packages covering all your team\'s games with same-day gallery uploads for quick sharing.',
+    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />',
   },
-];
-
-const icons = [
-  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />',
-  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />',
-  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />',
-  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />',
-  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />',
-  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />',
 ];
 ---
 
-<BaseLayout title="Services" description={`Explore the full range of services offered by ${brand.name}. From repairs to remodeling, we do it all.`}>
+<BaseLayout title="Services" description={`Explore photography and videography services offered by ${brand.name}.`}>
   <Header slot="header" />
 
-  <Banner title="Our Services" />
+  <div class="bg-primary text-primary-fg py-12 px-4 sm:px-6">
+    <div class="mx-auto max-w-site">
+      <p class="text-sm font-semibold uppercase tracking-widest text-accent font-heading">What We Offer</p>
+      <h1 class="mt-2 text-h1 font-heading font-bold uppercase">Our Services</h1>
+    </div>
+  </div>
 
-  <section class="py-section">
+  <section class="py-16">
     <div class="mx-auto max-w-site px-4 sm:px-6">
-      <div class="mx-auto mb-10 max-w-2xl text-center lg:mb-14">
-        <h2 class="font-heading text-h2 font-bold uppercase text-text">What we can do for you</h2>
+      <div class="mx-auto mb-12 max-w-2xl text-center">
+        <h2 class="font-heading text-h2 font-bold uppercase text-text">Everything your team needs</h2>
         <p class="mt-3 text-text-muted leading-relaxed">
-          No job is too big or too small. Here's a look at the services we offer.
+          From single-game shoots to full-season packages, we cover it all.
         </p>
       </div>
 
       <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
-        {services.map((service, i) => (
-          <div class="flex gap-5 rounded-lg border border-border bg-background p-6 shadow-sm">
+        {services.map((service) => (
+          <div class="flex gap-5 rounded-xl border border-border bg-background p-6 shadow-sm">
             <div class="flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <svg class="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" set:html={icons[i % icons.length]} />
+              <svg class="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" set:html={service.icon} />
             </div>
             <div>
               <h3 class="font-heading text-h3 font-semibold text-text">{service.title}</h3>
@@ -73,7 +73,15 @@ const icons = [
     </div>
   </section>
 
-  <CTA />
+  <section class="bg-primary py-16">
+    <div class="mx-auto max-w-site px-4 text-center sm:px-6">
+      <h2 class="text-h2 font-heading font-bold uppercase text-primary-fg">Ready to book?</h2>
+      <p class="mt-4 text-lead text-primary-fg/80">Get in touch to discuss your event coverage needs.</p>
+      <a href="/contact" class="mt-8 inline-flex min-h-[52px] items-center rounded-md bg-accent px-10 py-3 text-base font-bold text-accent-fg transition-opacity hover:opacity-90">
+        Contact Us
+      </a>
+    </div>
+  </section>
 
   <Footer slot="footer" />
 </BaseLayout>

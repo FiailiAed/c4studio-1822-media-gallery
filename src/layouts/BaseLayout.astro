@@ -67,16 +67,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? brand.url);
       <script type="application/ld+json" set:html={JSON.stringify(schema)} />
     )}
 
-    <!-- FOUC prevention for dark mode -->
-    <script is:inline>
-      (function(){
-        var t = localStorage.getItem('theme');
-        if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-          document.documentElement.classList.add('dark-mode');
-        }
-      })();
-    </script>
-
     <slot name="head" />
     <ClientRouter />
   </head>

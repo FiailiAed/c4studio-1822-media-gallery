@@ -1,0 +1,110 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { brand } from '../../config/brand';
+---
+
+<BaseLayout title={`Galleries — ${brand.name}`} description="Browse lacrosse event galleries by 1822 Media. Enter your team access code to view and download full-resolution photos.">
+  <Header slot="header" />
+
+  <section class="bg-surface py-16">
+    <div class="mx-auto max-w-site px-4 sm:px-6">
+      <div class="text-center">
+        <p class="font-heading text-sm font-semibold uppercase tracking-widest text-accent">Event Galleries</p>
+        <h1 class="mt-3 text-h1 font-heading font-bold uppercase text-primary">All Events</h1>
+        <p class="mt-4 text-lead text-text-muted">
+          Select an event to view photos. Some events are free, others require an access code.
+        </p>
+      </div>
+
+      <!-- Loading skeleton -->
+      <div id="gallery-skeleton" class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map(() => (
+          <div class="animate-pulse rounded-xl bg-border h-64"></div>
+        ))}
+      </div>
+
+      <!-- Events grid (populated by JS) -->
+      <div id="events-grid" class="mt-12 hidden grid gap-6 sm:grid-cols-2 lg:grid-cols-3"></div>
+
+      <!-- Empty state -->
+      <div id="events-empty" class="mt-12 hidden text-center py-20">
+        <p class="text-h3 font-heading font-bold text-text-muted">No events published yet.</p>
+        <p class="mt-2 text-text-muted">Check back soon for upcoming lacrosse events.</p>
+      </div>
+    </div>
+  </section>
+
+  <Footer slot="footer" />
+</BaseLayout>
+
+<script>
+  import { ConvexClient } from 'convex/browser';
+  import { api } from '../../../convex/_generated/api';
+
+  const convex = new ConvexClient(import.meta.env.PUBLIC_CONVEX_URL as string);
+  const skeleton = document.getElementById('gallery-skeleton')!;
+  const grid = document.getElementById('events-grid')!;
+  const empty = document.getElementById('events-empty')!;
+
+  type Event = {
+    _id: string;
+    slug: string;
+    title: string;
+    eventDate: number;
+    location?: string;
+    isFree: boolean;
+    priceAmountCents?: number;
+    coverImageUrl?: string;
+    mediaCount: number;
+  };
+
+  function formatDate(ts: number): string {
+    return new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(ts));
+  }
+
+  function renderCard(event: Event): string {
+    const badge = event.isFree
+      ? `<span class="rounded-full bg-accent/20 px-2.5 py-0.5 text-xs font-semibold text-primary">Free</span>`
+      : `<span class="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+           ${event.priceAmountCents ? `$${(event.priceAmountCents / 100).toFixed(0)}` : 'Paid'}
+         </span>`;
+
+    const cover = event.coverImageUrl
+      ? `<img src="${event.coverImageUrl}" alt="${event.title}" class="absolute inset-0 h-full w-full object-cover" loading="lazy" />`
+      : `<div class="absolute inset-0 bg-primary/10 flex items-center justify-center">
+           <svg class="size-16 text-primary/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+           </svg>
+         </div>`;
+
+    return `
+      <a href="/gallery/${event.slug}" class="group block rounded-xl border border-border bg-background overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+        <div class="relative aspect-video overflow-hidden bg-surface">
+          ${cover}
+          <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+          <div class="absolute bottom-3 left-3 flex items-center gap-2">
+            ${badge}
+            <span class="rounded-full bg-black/40 px-2.5 py-0.5 text-xs font-medium text-white">${event.mediaCount} photos</span>
+          </div>
+        </div>
+        <div class="p-5">
+          <h2 class="font-heading text-lg font-bold uppercase text-primary group-hover:text-primary-light transition-colors">${event.title}</h2>
+          <p class="mt-1 text-sm text-text-muted">${formatDate(event.eventDate)}${event.location ? ` &middot; ${event.location}` : ''}</p>
+        </div>
+      </a>
+    `;
+  }
+
+  convex.onUpdate(api.events.listPublished, {}, (events) => {
+    skeleton.classList.add('hidden');
+    if (!events || events.length === 0) {
+      empty.classList.remove('hidden');
+      return;
+    }
+    grid.classList.remove('hidden');
+    grid.innerHTML = events.map(renderCard).join('');
+  });
+</script>

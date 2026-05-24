@@ -2,30 +2,28 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import Banner from '../components/Banner.astro';
-import CTA from '../components/CTA.astro';
 import { Image } from 'astro:assets';
 import { brand } from '../config/brand';
-
-const team = [
-  { name: 'John Smith',   role: 'Founder & Lead Technician', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80' },
-  { name: 'Maria Garcia', role: 'Operations Manager',        image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80' },
-  { name: 'David Chen',   role: 'Senior Technician',         image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80' },
-];
 ---
 
-<BaseLayout title="About Us" description={`Learn about ${brand.name} — our story, team, and commitment to quality service.`}>
+<BaseLayout title="About 1822 Media" description="Learn about 1822 Media — professional lacrosse event photography and videography by c4studio.">
   <Header slot="header" />
 
-  <Banner title="About Us" />
+  <!-- Banner -->
+  <div class="bg-primary text-primary-fg py-12 px-4 sm:px-6">
+    <div class="mx-auto max-w-site">
+      <p class="text-sm font-semibold uppercase tracking-widest text-accent font-heading">About</p>
+      <h1 class="mt-2 text-h1 font-heading font-bold uppercase">1822 Media</h1>
+    </div>
+  </div>
 
   <!-- Story -->
-  <section class="py-section">
+  <section class="py-16">
     <div class="mx-auto grid max-w-site grid-cols-1 items-center gap-8 px-4 sm:px-6 lg:grid-cols-2 lg:gap-14">
       <div class="overflow-hidden rounded-lg shadow-lg">
         <Image
-          src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80"
-          alt="Our team planning a project together"
+          src="https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800&q=80"
+          alt="Sports photographer at a lacrosse game"
           width={800}
           height={600}
           loading="lazy"
@@ -33,48 +31,66 @@ const team = [
         />
       </div>
       <div class="space-y-5">
-        <span class="text-topper font-bold uppercase tracking-widest text-accent">Our Story</span>
-        <h2 class="font-heading text-h2 font-bold uppercase text-text">Built on trust, driven by quality</h2>
+        <span class="font-heading text-sm font-bold uppercase tracking-widest text-accent">Our Story</span>
+        <h2 class="font-heading text-h2 font-bold uppercase text-text">Passion for the game, precision behind the lens</h2>
         <p class="text-text-muted leading-relaxed">
-          What started as a one-person operation has grown into a trusted local team. For over 15 years, we've served homeowners and businesses with reliable, high-quality work — and we plan to keep doing just that for decades to come.
+          1822 Media is the official photography and videography partner of 1822 Lacrosse. Founded and operated by c4studio, we specialize in capturing the fast-paced, high-energy world of lacrosse — from youth club games to competitive tournaments.
         </p>
         <p class="text-text-muted leading-relaxed">
-          Every member of our crew is licensed, insured, and background-checked. We treat your property with the same care we'd give our own, and we stand behind every job with a satisfaction guarantee.
+          Every event we shoot is carefully edited and delivered through our secure gallery platform. Teams and families get easy access to professional-quality photos they can download and share — no social media watermarks, no low-resolution downloads.
         </p>
       </div>
     </div>
   </section>
 
-  <!-- Team -->
-  <section class="bg-surface py-section">
+  <!-- What We Do -->
+  <section class="bg-surface py-16">
     <div class="mx-auto max-w-site px-4 sm:px-6">
       <div class="mx-auto mb-10 max-w-2xl text-center">
-        <span class="text-topper font-bold uppercase tracking-widest text-accent">Our Team</span>
-        <h2 class="mt-2 font-heading text-h2 font-bold uppercase text-text">Meet the crew</h2>
+        <span class="font-heading text-sm font-bold uppercase tracking-widest text-accent">What We Do</span>
+        <h2 class="mt-2 font-heading text-h2 font-bold uppercase text-text">Built for lacrosse families</h2>
       </div>
 
-      <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-        {team.map(({ name, role, image }) => (
-          <div class="overflow-hidden rounded-lg bg-background shadow-sm">
-            <Image
-              src={image}
-              alt={name}
-              width={400}
-              height={400}
-              loading="lazy"
-              class="aspect-square w-full object-cover"
-            />
-            <div class="p-5">
-              <h3 class="font-heading text-lg font-semibold text-text">{name}</h3>
-              <p class="text-sm text-text-muted">{role}</p>
+      <div class="grid gap-8 sm:grid-cols-3">
+        {[
+          {
+            icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />',
+            title: 'Event Photography',
+            desc: 'High-resolution action shots, team portraits, and sideline moments from every event we cover.',
+          },
+          {
+            icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />',
+            title: 'Highlight Videos',
+            desc: 'Edited game recaps and player highlights that teams can share and keep as lasting memories.',
+          },
+          {
+            icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />',
+            title: 'Branded Graphics',
+            desc: 'Custom team posters, social media assets, and digital designs for players and coaches.',
+          },
+        ].map(({ icon, title, desc }) => (
+          <div class="rounded-xl border border-border bg-background p-8">
+            <div class="flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <svg class="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" set:html={icon} />
             </div>
+            <h3 class="mt-4 font-heading text-h3 font-bold uppercase text-text">{title}</h3>
+            <p class="mt-2 text-text-muted leading-relaxed">{desc}</p>
           </div>
         ))}
       </div>
     </div>
   </section>
 
-  <CTA />
+  <!-- CTA -->
+  <section class="bg-primary py-16">
+    <div class="mx-auto max-w-site px-4 text-center sm:px-6">
+      <h2 class="text-h2 font-heading font-bold uppercase text-primary-fg">Want 1822 Media at your next event?</h2>
+      <p class="mt-4 text-lead text-primary-fg/80">Reach out and we'll get you set up.</p>
+      <a href="/contact" class="mt-8 inline-flex min-h-[52px] items-center rounded-md bg-accent px-10 py-3 text-base font-bold text-accent-fg transition-opacity hover:opacity-90">
+        Contact Us
+      </a>
+    </div>
+  </section>
 
   <Footer slot="footer" />
 </BaseLayout>

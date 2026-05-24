@@ -2,8 +2,6 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
-import Banner from '../../components/Banner.astro';
-import CTA from '../../components/CTA.astro';
 import { getCollection } from 'astro:content';
 import { brand } from '../../config/brand';
 
@@ -11,15 +9,22 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 ---
 
-<BaseLayout title="Blog" description={`Tips, guides, and news from ${brand.name}. Stay informed about home maintenance and improvement.`}>
+<BaseLayout title="Blog" description={`Tips, news, and stories from ${brand.name} — lacrosse event photography.`}>
   <Header slot="header" />
 
-  <Banner title="Blog" />
+  <div class="bg-primary text-primary-fg py-12 px-4 sm:px-6">
+    <div class="mx-auto max-w-site">
+      <p class="text-sm font-semibold uppercase tracking-widest text-accent font-heading">Latest</p>
+      <h1 class="mt-2 text-h1 font-heading font-bold uppercase">Blog</h1>
+    </div>
+  </div>
 
-  <section class="py-section">
+  <section class="py-16">
     <div class="mx-auto max-w-site px-4 sm:px-6">
       {posts.length === 0 ? (
-        <p class="text-center text-text-muted">No posts yet. Check back soon!</p>
+        <div class="text-center py-20">
+          <p class="text-text-muted">No posts yet. Check back soon!</p>
+        </div>
       ) : (
         <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {posts.map((post) => {
@@ -29,14 +34,14 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft))
               day: 'numeric',
             });
             return (
-              <article class="group flex flex-col overflow-hidden rounded-lg border border-border bg-background shadow-sm transition-shadow hover:shadow-md">
+              <article class="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-background shadow-sm transition-shadow hover:shadow-md">
                 <div class="flex flex-1 flex-col p-6">
                   <div class="flex items-center gap-2 text-sm text-text-muted">
                     <time datetime={post.data.date.toISOString()}>{formattedDate}</time>
                     {post.data.tags.length > 0 && (
                       <>
                         <span aria-hidden="true">&bull;</span>
-                        <span>{post.data.tags[0]}</span>
+                        <span class="rounded-full bg-accent/20 px-2 py-0.5 text-xs font-medium text-primary">{post.data.tags[0]}</span>
                       </>
                     )}
                   </div>
@@ -62,8 +67,6 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft))
       )}
     </div>
   </section>
-
-  <CTA />
 
   <Footer slot="footer" />
 </BaseLayout>

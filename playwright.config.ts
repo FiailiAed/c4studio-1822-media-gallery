@@ -21,7 +21,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'pnpm build && pnpm preview',
+    command: 'bun run build && bun run preview',
     url: 'http://localhost:4321',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

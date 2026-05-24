@@ -1,0 +1,202 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import { brand } from '../../../config/brand';
+---
+
+<BaseLayout title={`New Event — Admin — ${brand.name}`} description="Create a new event.">
+  <Header slot="header" />
+
+  <section class="min-h-screen bg-surface py-10">
+    <div class="mx-auto max-w-2xl px-4 sm:px-6">
+      <a href="/admin/events" class="text-sm text-text-muted hover:text-primary transition-colors">&larr; All Events</a>
+      <h1 class="mt-4 text-h1 font-heading font-bold uppercase text-primary">Create Event</h1>
+
+      <form id="event-form" class="mt-8 space-y-6 rounded-xl border border-border bg-background p-8">
+        <div>
+          <label for="title" class="block text-sm font-medium text-text">Event Title *</label>
+          <input
+            id="title"
+            name="title"
+            type="text"
+            required
+            placeholder="Spring Clash 2025"
+            class="mt-1.5 w-full rounded-md border border-border bg-surface px-4 py-2.5 text-sm text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+          />
+        </div>
+
+        <div>
+          <label for="slug" class="block text-sm font-medium text-text">URL Slug *</label>
+          <p class="text-xs text-text-muted">Auto-generated from title. Used in the gallery URL.</p>
+          <input
+            id="slug"
+            name="slug"
+            type="text"
+            required
+            placeholder="spring-clash-2025"
+            pattern="[a-z0-9-]+"
+            class="mt-1.5 w-full rounded-md border border-border bg-surface px-4 py-2.5 font-mono text-sm text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+          />
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="event-date" class="block text-sm font-medium text-text">Event Date *</label>
+            <input
+              id="event-date"
+              name="eventDate"
+              type="date"
+              required
+              class="mt-1.5 w-full rounded-md border border-border bg-surface px-4 py-2.5 text-sm text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+            />
+          </div>
+          <div>
+            <label for="location" class="block text-sm font-medium text-text">Location</label>
+            <input
+              id="location"
+              name="location"
+              type="text"
+              placeholder="Baltimore, MD"
+              class="mt-1.5 w-full rounded-md border border-border bg-surface px-4 py-2.5 text-sm text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="description" class="block text-sm font-medium text-text">Description</label>
+          <textarea
+            id="description"
+            name="description"
+            rows="3"
+            placeholder="Optional description of the event..."
+            class="mt-1.5 w-full rounded-md border border-border bg-surface px-4 py-2.5 text-sm text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+          ></textarea>
+        </div>
+
+        <div class="rounded-lg border border-border p-4">
+          <div class="flex items-center gap-3">
+            <input
+              id="is-free"
+              name="isFree"
+              type="checkbox"
+              checked
+              class="h-4 w-4 rounded border-border text-accent focus:ring-accent"
+            />
+            <label for="is-free" class="text-sm font-medium text-text">Free event (no payment required)</label>
+          </div>
+
+          <div id="paid-fields" class="mt-4 hidden grid gap-4 sm:grid-cols-2">
+            <div>
+              <label for="price" class="block text-sm font-medium text-text">Price (USD) *</label>
+              <div class="relative mt-1.5">
+                <span class="absolute left-3 top-2.5 text-sm text-text-muted">$</span>
+                <input
+                  id="price"
+                  name="price"
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  placeholder="25.00"
+                  class="w-full rounded-md border border-border bg-surface pl-7 pr-4 py-2.5 text-sm text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+                />
+              </div>
+            </div>
+            <div>
+              <label for="stripe-price-id" class="block text-sm font-medium text-text">Stripe Price ID *</label>
+              <input
+                id="stripe-price-id"
+                name="stripePriceId"
+                type="text"
+                placeholder="price_..."
+                class="mt-1.5 w-full rounded-md border border-border bg-surface px-4 py-2.5 font-mono text-sm text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <input
+            id="is-published"
+            name="isPublished"
+            type="checkbox"
+            class="h-4 w-4 rounded border-border text-accent focus:ring-accent"
+          />
+          <label for="is-published" class="text-sm font-medium text-text">Publish immediately</label>
+        </div>
+
+        <p id="form-error" class="hidden text-sm text-red-600"></p>
+
+        <div class="flex items-center gap-4">
+          <button
+            type="submit"
+            class="rounded-md bg-accent px-6 py-2.5 text-sm font-bold text-accent-fg transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            Create Event
+          </button>
+          <a href="/admin/events" class="text-sm text-text-muted hover:text-primary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <Footer slot="footer" />
+</BaseLayout>
+
+<script>
+  import { ConvexClient } from 'convex/browser';
+  import { api } from '../../../../convex/_generated/api';
+
+  const convex = new ConvexClient(import.meta.env.PUBLIC_CONVEX_URL as string);
+
+  // Auto-generate slug from title
+  const titleInput = document.getElementById('title') as HTMLInputElement;
+  const slugInput = document.getElementById('slug') as HTMLInputElement;
+  titleInput.addEventListener('input', () => {
+    slugInput.value = titleInput.value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+  });
+
+  // Toggle paid fields
+  const isFreeCheckbox = document.getElementById('is-free') as HTMLInputElement;
+  const paidFields = document.getElementById('paid-fields')!;
+  isFreeCheckbox.addEventListener('change', () => {
+    paidFields.classList.toggle('hidden', isFreeCheckbox.checked);
+  });
+
+  // Form submit
+  document.getElementById('event-form')!.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
+    const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+    const errorEl = document.getElementById('form-error')!;
+    errorEl.classList.add('hidden');
+    btn.disabled = true;
+    btn.textContent = 'Creating...';
+
+    const isFree = isFreeCheckbox.checked;
+    const priceVal = (document.getElementById('price') as HTMLInputElement).value;
+
+    try {
+      const eventId = await convex.mutation(api.events.create, {
+        title: (document.getElementById('title') as HTMLInputElement).value.trim(),
+        slug: (document.getElementById('slug') as HTMLInputElement).value.trim(),
+        eventDate: new Date((document.getElementById('event-date') as HTMLInputElement).value).getTime(),
+        location: (document.getElementById('location') as HTMLInputElement).value.trim() || undefined,
+        description: (document.getElementById('description') as HTMLTextAreaElement).value.trim() || undefined,
+        isFree,
+        stripePriceId: !isFree ? (document.getElementById('stripe-price-id') as HTMLInputElement).value.trim() || undefined : undefined,
+        priceAmountCents: !isFree && priceVal ? Math.round(parseFloat(priceVal) * 100) : undefined,
+        isPublished: (document.getElementById('is-published') as HTMLInputElement).checked,
+      });
+      window.location.href = `/admin/events/${eventId}`;
+    } catch (err) {
+      errorEl.textContent = (err as Error).message ?? 'Failed to create event.';
+      errorEl.classList.remove('hidden');
+      btn.disabled = false;
+      btn.textContent = 'Create Event';
+    }
+  });
+</script>

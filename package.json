@@ -32,14 +32,25 @@
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.1",
+    "@astrojs/vercel": "^10.0.7",
+    "@clerk/astro": "^3.3.1",
+    "@convex-dev/stripe": "^0.1.4",
+    "@stripe/stripe-js": "^9.6.0",
     "@tailwindcss/typography": "^0.5.19",
-    "@tailwindcss/vite": "^4.2.1",
+    "@tailwindcss/vite": "^4.3.0",
     "astro": "^6.0.4",
     "astro-robots-txt": "^1.0.0",
-    "tailwindcss": "^4.2.1"
+    "convex": "^1.39.1",
+    "posthog-js": "^1.376.0",
+    "stripe": "^22.1.1",
+    "tailwindcss": "^4.2.1",
+    "uploadthing": "^7.7.4"
   },
   "devDependencies": {
-    "@playwright/test": "^1.58.2"
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^25.9.1",
+    "typescript": "^6.0.3",
+    "zod": "^4.4.3"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

@@ -2,13 +2,6 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import Hero from '../components/Hero.astro';
-import TrustBar from '../components/TrustBar.astro';
-import Services from '../components/Services.astro';
-import About from '../components/About.astro';
-import Reviews from '../components/Reviews.astro';
-import Gallery from '../components/Gallery.astro';
-import CTA from '../components/CTA.astro';
 import { brand } from '../config/brand';
 import { client } from '../data/client';
 ---
@@ -20,28 +13,101 @@ import { client } from '../data/client';
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
     name: client.name,
-    telephone: client.phoneForTel,
     email: client.email,
-    address: {
-      '@type': 'PostalAddress',
-      streetAddress: client.address.lineOne,
-      addressLocality: client.address.city,
-      addressRegion: client.address.state,
-      postalCode: client.address.zip,
-      addressCountry: client.address.country,
-    },
     url: client.domain,
   }}
 >
   <Header slot="header" />
 
-  <Hero />
-  <TrustBar />
-  <Services />
-  <About />
-  <Reviews />
-  <Gallery />
-  <CTA />
+  <!-- Hero -->
+  <section class="relative overflow-hidden bg-primary text-primary-fg">
+    <div class="mx-auto max-w-site px-4 py-24 sm:px-6 lg:py-32">
+      <div class="max-w-2xl">
+        <p class="font-heading text-sm font-semibold uppercase tracking-widest text-accent">
+          c4studio &times; 1822 Lacrosse
+        </p>
+        <h1 class="mt-4 font-heading text-display font-bold uppercase leading-tight tracking-tight">
+          1822 Media
+        </h1>
+        <p class="mt-6 text-lead text-primary-fg/80 leading-relaxed">
+          Professional lacrosse event photography and videography. Browse galleries from your team's games and tournaments — unlock full access with your team code.
+        </p>
+        <div class="mt-10 flex flex-wrap gap-4">
+          <a
+            href="/gallery"
+            class="inline-flex min-h-[52px] items-center rounded-md bg-accent px-8 py-3 text-base font-bold text-accent-fg shadow-lg transition-opacity hover:opacity-90"
+          >
+            View Galleries
+          </a>
+          <a
+            href="/contact"
+            class="inline-flex min-h-[52px] items-center rounded-md border-2 border-primary-fg/30 px-8 py-3 text-base font-semibold text-primary-fg transition-colors hover:border-primary-fg/60"
+          >
+            Book an Event
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decorative accent bar -->
+    <div class="absolute bottom-0 left-0 h-1 w-full bg-accent opacity-60"></div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="bg-background py-20">
+    <div class="mx-auto max-w-site px-4 sm:px-6">
+      <div class="text-center">
+        <p class="font-heading text-sm font-semibold uppercase tracking-widest text-accent">How It Works</p>
+        <h2 class="mt-3 text-h2 font-heading font-bold uppercase text-primary">
+          From the field to your device
+        </h2>
+      </div>
+
+      <div class="mt-14 grid gap-8 sm:grid-cols-3">
+        {[
+          {
+            step: '01',
+            title: 'We shoot your game',
+            desc: 'c4studio captures every moment of your lacrosse event — action shots, team photos, and highlights.',
+          },
+          {
+            step: '02',
+            title: 'Get your access code',
+            desc: 'Your team coordinator receives an access code after the event. Free events are open to all.',
+          },
+          {
+            step: '03',
+            title: 'Download your photos',
+            desc: 'Enter your code on the event gallery page, browse full-resolution photos, and download what you love.',
+          },
+        ].map(({ step, title, desc }) => (
+          <div class="rounded-xl border border-border bg-surface p-8">
+            <span class="font-heading text-4xl font-bold text-accent">{step}</span>
+            <h3 class="mt-4 text-h3 font-heading font-bold uppercase text-primary">{title}</h3>
+            <p class="mt-3 text-body text-text-muted leading-relaxed">{desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="bg-primary py-20">
+    <div class="mx-auto max-w-site px-4 text-center sm:px-6">
+      <h2 class="text-h2 font-heading font-bold uppercase text-primary-fg">
+        Ready to view your team's gallery?
+      </h2>
+      <p class="mt-4 text-lead text-primary-fg/80">
+        Browse all published event galleries and unlock your team's photos with your access code.
+      </p>
+      <a
+        href="/gallery"
+        class="mt-8 inline-flex min-h-[52px] items-center rounded-md bg-accent px-10 py-3 text-base font-bold text-accent-fg shadow-lg transition-opacity hover:opacity-90"
+      >
+        Browse Galleries
+      </a>
+    </div>
+  </section>
 
   <Footer slot="footer" />
 </BaseLayout>

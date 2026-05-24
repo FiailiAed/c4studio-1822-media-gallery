@@ -19,21 +19,21 @@ A fast, mobile-first website template for trade and service businesses — handy
 ## Quick start
 
 ```bash
-# 1. Install dependencies (uses pnpm)
-pnpm install
+# 1. Install dependencies (uses bun)
+bun install
 
 # 2. Start the dev server
-pnpm run dev
+bun run dev
 # → http://localhost:4321
 
 # 3. Build for production
-pnpm run build
+bun run build
 
 # 4. Preview the production build locally
-pnpm run preview
+bun run preview
 ```
 
-> **Note:** This project uses `pnpm`. Do not use `npm install` or `yarn` — they will create a conflicting lockfile.
+> **Note:** This project uses `bun`. Do not use `npm install` or `yarn` — they will create a conflicting lockfile.
 
 ---
 
@@ -191,7 +191,7 @@ The gallery uses automatic file discovery. You do not need to edit any code:
 
 1. Delete the placeholder `.gitkeep` file from `src/assets/images/gallery/`
 2. Drop your project photos into `src/assets/images/gallery/`
-3. Run `pnpm run build` — your images appear automatically
+3. Run `bun run build` — your images appear automatically
 
 **The filename becomes the caption.** Name your files descriptively:
 
@@ -257,8 +257,8 @@ The `netlify.toml` file already includes security headers (`X-Frame-Options`, `X
 |---|---|---|
 | [Astro](https://astro.build) | 6 | Framework & static site generator |
 | [Tailwind CSS](https://tailwindcss.com) | 4 | Utility-first styling |
-| [Netlify](https://netlify.com) | — | Hosting, forms, CDN |
-| [pnpm](https://pnpm.io) | 9+ | Package manager |
+| [Vercel](https://vercel.com) | — | Hosting, forms, CDN |
+| [bun](https://bun.sh) | 9+ | Package manager |
 
 ---
 
@@ -266,8 +266,8 @@ The `netlify.toml` file already includes security headers (`X-Frame-Options`, `X
 
 | Command | What it does |
 |---|---|
-| `pnpm install` | Install all dependencies |
-| `pnpm run dev` | Start dev server at `localhost:4321` |
-| `pnpm run build` | Build the production site to `./dist/` |
-| `pnpm run preview` | Preview the production build locally |
-| `pnpm run astro check` | Type-check all `.astro` files |
+| `bun install` | Install all dependencies |
+| `bun run dev` | Start dev server at `localhost:4321` |
+| `bun run build` | Build the production site to `./dist/` |
+| `bun run preview` | Preview the production build locally |
+| `bun run astro check` | Type-check all `.astro` files |

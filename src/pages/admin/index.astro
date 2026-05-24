@@ -1,0 +1,143 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { brand } from '../../config/brand';
+---
+
+<BaseLayout title={`Admin Dashboard — ${brand.name}`} description="1822 Media admin dashboard.">
+  <Header slot="header" />
+
+  <section class="min-h-screen bg-surface py-10">
+    <div class="mx-auto max-w-site px-4 sm:px-6">
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h1 class="text-h1 font-heading font-bold uppercase text-primary">Dashboard</h1>
+          <p class="text-text-muted">Manage events, media, and access codes.</p>
+        </div>
+        <a
+          href="/admin/events/new"
+          class="inline-flex items-center gap-2 rounded-md bg-accent px-5 py-2.5 text-sm font-bold text-accent-fg transition-opacity hover:opacity-90"
+        >
+          <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+          New Event
+        </a>
+      </div>
+
+      <!-- Stats (populated by JS) -->
+      <div id="stats-loading" class="grid gap-4 sm:grid-cols-3 animate-pulse">
+        {Array.from({ length: 3 }).map(() => (
+          <div class="rounded-xl border border-border bg-background p-6 h-24"></div>
+        ))}
+      </div>
+      <div id="stats-grid" class="hidden grid gap-4 sm:grid-cols-3">
+        <div class="rounded-xl border border-border bg-background p-6">
+          <p class="text-sm font-medium text-text-muted">Total Revenue</p>
+          <p id="stat-revenue" class="mt-2 text-3xl font-bold font-heading text-primary">—</p>
+        </div>
+        <div class="rounded-xl border border-border bg-background p-6">
+          <p class="text-sm font-medium text-text-muted">Total Events</p>
+          <p id="stat-events" class="mt-2 text-3xl font-bold font-heading text-primary">—</p>
+        </div>
+        <div class="rounded-xl border border-border bg-background p-6">
+          <p class="text-sm font-medium text-text-muted">Total Purchases</p>
+          <p id="stat-purchases" class="mt-2 text-3xl font-bold font-heading text-primary">—</p>
+        </div>
+      </div>
+
+      <!-- Recent purchases -->
+      <div class="mt-10">
+        <h2 class="text-h3 font-heading font-bold uppercase text-primary mb-4">Recent Purchases</h2>
+        <div id="purchases-loading" class="animate-pulse space-y-2">
+          {Array.from({ length: 3 }).map(() => (
+            <div class="h-14 rounded-lg border border-border bg-background"></div>
+          ))}
+        </div>
+        <div id="purchases-list" class="hidden space-y-2"></div>
+        <div id="purchases-empty" class="hidden rounded-xl border border-border bg-background p-8 text-center text-text-muted">
+          No purchases yet.
+        </div>
+      </div>
+
+      <!-- Events list -->
+      <div class="mt-10">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-h3 font-heading font-bold uppercase text-primary">Events</h2>
+          <a href="/admin/events" class="text-sm text-primary hover:underline">View all</a>
+        </div>
+        <div id="events-loading" class="animate-pulse space-y-2">
+          {Array.from({ length: 3 }).map(() => (
+            <div class="h-16 rounded-lg border border-border bg-background"></div>
+          ))}
+        </div>
+        <div id="events-list" class="hidden space-y-2"></div>
+      </div>
+    </div>
+  </section>
+
+  <Footer slot="footer" />
+</BaseLayout>
+
+<script>
+  import { ConvexClient } from 'convex/browser';
+  import { api } from '../../../convex/_generated/api';
+
+  const convex = new ConvexClient(import.meta.env.PUBLIC_CONVEX_URL as string);
+
+  function formatDate(ts: number): string {
+    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(ts));
+  }
+
+  // Revenue summary
+  convex.onUpdate(api.purchases.getRevenueSummary, {}, (data) => {
+    document.getElementById('stats-loading')!.classList.add('hidden');
+    document.getElementById('stats-grid')!.classList.remove('hidden');
+    document.getElementById('stat-revenue')!.textContent =
+      data ? `$${(data.totalCents / 100).toFixed(2)}` : '$0.00';
+    document.getElementById('stat-purchases')!.textContent =
+      data ? String(data.purchases.length) : '0';
+
+    const list = document.getElementById('purchases-list')!;
+    const empty = document.getElementById('purchases-empty')!;
+    document.getElementById('purchases-loading')!.classList.add('hidden');
+
+    if (!data || data.purchases.length === 0) {
+      empty.classList.remove('hidden');
+      return;
+    }
+    list.classList.remove('hidden');
+    list.innerHTML = data.purchases.slice(0, 10).map(p => `
+      <div class="flex items-center justify-between rounded-lg border border-border bg-background px-4 py-3">
+        <div>
+          <p class="text-sm font-medium text-text">${p.buyerEmail}</p>
+          <p class="text-xs text-text-muted">${formatDate(p.createdAt)}</p>
+        </div>
+        <span class="text-sm font-semibold text-primary">$${(p.amountCents / 100).toFixed(2)}</span>
+      </div>
+    `).join('');
+  });
+
+  // Events list
+  convex.onUpdate(api.events.listAll, {}, (events) => {
+    document.getElementById('stat-events')!.textContent = events ? String(events.length) : '0';
+    document.getElementById('events-loading')!.classList.add('hidden');
+
+    const list = document.getElementById('events-list')!;
+    list.classList.remove('hidden');
+    if (!events || events.length === 0) {
+      list.innerHTML = '<p class="text-text-muted text-sm text-center py-4">No events yet. <a href="/admin/events/new" class="text-primary underline">Create one</a>.</p>';
+      return;
+    }
+    list.innerHTML = events.slice(0, 5).map(e => `
+      <a href="/admin/events/${e._id}" class="flex items-center justify-between rounded-lg border border-border bg-background px-4 py-3 hover:border-accent transition-colors group">
+        <div>
+          <p class="text-sm font-semibold text-text group-hover:text-primary">${e.title}</p>
+          <p class="text-xs text-text-muted">${formatDate(e.eventDate)} &middot; ${e.mediaCount} photos</p>
+        </div>
+        <span class="text-xs rounded-full px-2 py-0.5 ${e.isPublished ? 'bg-accent/20 text-primary' : 'bg-border text-text-muted'}">
+          ${e.isPublished ? 'Published' : 'Draft'}
+        </span>
+      </a>
+    `).join('');
+  });
+</script>

@@ -1,0 +1,358 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import { brand } from '../../../config/brand';
+
+const { id } = Astro.params;
+---
+
+<BaseLayout title={`Edit Event — Admin — ${brand.name}`} description="Edit event, upload media, manage access codes.">
+  <Header slot="header" />
+
+  <section class="min-h-screen bg-surface py-10">
+    <div class="mx-auto max-w-site px-4 sm:px-6">
+      <div class="mb-6">
+        <a href="/admin/events" class="text-sm text-text-muted hover:text-primary transition-colors">&larr; All Events</a>
+        <div id="event-title-bar" class="mt-2 flex items-center justify-between">
+          <div id="title-skeleton" class="animate-pulse h-8 w-64 rounded bg-border"></div>
+          <div id="title-content" class="hidden flex items-center gap-3">
+            <h1 id="page-title" class="text-h1 font-heading font-bold uppercase text-primary"></h1>
+            <a id="view-gallery-link" href="#" class="text-sm text-primary hover:underline" target="_blank">View gallery &rarr;</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid gap-8 lg:grid-cols-3">
+        <!-- Left column: event details + media upload -->
+        <div class="lg:col-span-2 space-y-8">
+
+          <!-- Event details form -->
+          <div class="rounded-xl border border-border bg-background p-6">
+            <h2 class="text-h3 font-heading font-bold uppercase text-primary mb-4">Event Details</h2>
+            <form id="event-edit-form" class="space-y-4">
+              <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label for="edit-title" class="block text-sm font-medium text-text">Title</label>
+                  <input id="edit-title" type="text" class="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text focus:border-accent focus:outline-none" />
+                </div>
+                <div>
+                  <label for="edit-location" class="block text-sm font-medium text-text">Location</label>
+                  <input id="edit-location" type="text" class="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text focus:border-accent focus:outline-none" />
+                </div>
+              </div>
+              <div>
+                <label for="edit-date" class="block text-sm font-medium text-text">Date</label>
+                <input id="edit-date" type="date" class="mt-1 rounded-md border border-border bg-surface px-3 py-2 text-sm text-text focus:border-accent focus:outline-none" />
+              </div>
+              <div class="flex items-center gap-4">
+                <label class="flex items-center gap-2 text-sm text-text">
+                  <input id="edit-published" type="checkbox" class="h-4 w-4 rounded border-border text-accent" />
+                  Published
+                </label>
+                <label class="flex items-center gap-2 text-sm text-text">
+                  <input id="edit-free" type="checkbox" class="h-4 w-4 rounded border-border text-accent" />
+                  Free event
+                </label>
+              </div>
+              <p id="edit-error" class="hidden text-sm text-red-600"></p>
+              <button type="submit" class="rounded-md bg-accent px-4 py-2 text-sm font-bold text-accent-fg hover:opacity-90 disabled:opacity-50">
+                Save Changes
+              </button>
+            </form>
+          </div>
+
+          <!-- Media upload -->
+          <div class="rounded-xl border border-border bg-background p-6">
+            <h2 class="text-h3 font-heading font-bold uppercase text-primary mb-4">Media</h2>
+
+            <div
+              id="upload-zone"
+              class="rounded-lg border-2 border-dashed border-border p-8 text-center transition-colors hover:border-accent cursor-pointer"
+            >
+              <input type="file" id="file-input" multiple accept="image/*,video/*" class="hidden" />
+              <svg class="mx-auto size-10 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              <p class="mt-3 text-sm font-medium text-text">Click to upload or drag and drop</p>
+              <p class="mt-1 text-xs text-text-muted">Images up to 16MB, videos up to 256MB</p>
+            </div>
+
+            <div id="upload-progress" class="mt-4 hidden space-y-2"></div>
+
+            <div id="media-list" class="mt-6 grid gap-3 grid-cols-3 sm:grid-cols-4 lg:grid-cols-5"></div>
+          </div>
+        </div>
+
+        <!-- Right column: access codes -->
+        <div class="space-y-4">
+          <div class="rounded-xl border border-border bg-background p-6">
+            <h2 class="text-h3 font-heading font-bold uppercase text-primary mb-4">Access Codes</h2>
+
+            <button
+              id="generate-code-btn"
+              class="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-bold text-primary-fg transition-opacity hover:opacity-90"
+            >
+              Generate New Code
+            </button>
+
+            <div id="codes-list" class="mt-4 space-y-2"></div>
+            <div id="codes-empty" class="mt-4 hidden text-center text-sm text-text-muted py-4">
+              No access codes yet.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <Footer slot="footer" />
+</BaseLayout>
+
+<script define:vars={{ id }}>
+  import { ConvexClient } from 'convex/browser';
+  import { api } from '../../../../convex/_generated/api';
+
+  const convex = new ConvexClient(import.meta.env.PUBLIC_CONVEX_URL);
+
+  let currentEvent = null;
+
+  function formatDate(ts) {
+    return new Date(ts).toISOString().split('T')[0];
+  }
+
+  // Load event data
+  convex.onUpdate(api.events.get, { eventId: id }, (event) => {
+    if (!event) return;
+    currentEvent = event;
+
+    document.getElementById('title-skeleton').classList.add('hidden');
+    document.getElementById('title-content').classList.remove('hidden');
+    document.getElementById('page-title').textContent = event.title;
+    document.getElementById('view-gallery-link').href = `/gallery/${event.slug}`;
+
+    document.getElementById('edit-title').value = event.title;
+    document.getElementById('edit-location').value = event.location ?? '';
+    document.getElementById('edit-date').value = formatDate(event.eventDate);
+    document.getElementById('edit-published').checked = event.isPublished;
+    document.getElementById('edit-free').checked = event.isFree;
+  });
+
+  // Edit form submit
+  document.getElementById('event-edit-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.currentTarget.querySelector('button[type="submit"]');
+    const errorEl = document.getElementById('edit-error');
+    errorEl.classList.add('hidden');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    try {
+      await convex.mutation(api.events.update, {
+        eventId: id,
+        title: document.getElementById('edit-title').value.trim(),
+        location: document.getElementById('edit-location').value.trim() || undefined,
+        eventDate: new Date(document.getElementById('edit-date').value).getTime(),
+        isPublished: document.getElementById('edit-published').checked,
+        isFree: document.getElementById('edit-free').checked,
+      });
+      btn.textContent = 'Saved!';
+      setTimeout(() => { btn.textContent = 'Save Changes'; }, 2000);
+    } catch (err) {
+      errorEl.textContent = err?.message ?? 'Failed to save.';
+      errorEl.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // Media list
+  convex.onUpdate(api.media.listByEvent, { eventId: id }, (assets) => {
+    const list = document.getElementById('media-list');
+    if (!assets || assets.length === 0) {
+      list.innerHTML = '';
+      return;
+    }
+    list.innerHTML = assets.map(a => {
+      const isVideo = a.mimeType?.startsWith('video/');
+      const thumb = isVideo
+        ? `<div class="absolute inset-0 bg-primary/10 flex items-center justify-center"><svg class="size-8 text-primary/40" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg></div>`
+        : `<img src="${a.uploadthingUrl}" alt="${a.filename}" class="absolute inset-0 h-full w-full object-cover" loading="lazy" />`;
+
+      return `
+        <div class="group relative aspect-square overflow-hidden rounded-lg bg-surface">
+          ${thumb}
+          <button
+            class="absolute top-1 right-1 hidden group-hover:flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-red-600 transition-colors"
+            data-asset-id="${a._id}"
+            data-key="${a.uploadthingKey}"
+            aria-label="Delete"
+          >
+            <svg class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    // Delete handlers
+    list.querySelectorAll('[data-asset-id]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this photo?')) return;
+        await convex.mutation(api.media.deleteAsset, { assetId: btn.dataset.assetId });
+      });
+    });
+  });
+
+  // Upload zone
+  const uploadZone = document.getElementById('upload-zone');
+  const fileInput = document.getElementById('file-input');
+  const progressEl = document.getElementById('upload-progress');
+
+  uploadZone.addEventListener('click', () => fileInput.click());
+  uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('border-accent'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('border-accent'));
+  uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove('border-accent');
+    if (e.dataTransfer?.files) handleFiles(e.dataTransfer.files);
+  });
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files) handleFiles(fileInput.files);
+  });
+
+  async function handleFiles(files) {
+    if (!currentEvent) return;
+    progressEl.classList.remove('hidden');
+
+    const existingAssets = await convex.query(api.media.listByEvent, { eventId: id });
+    let sortOrder = existingAssets.length;
+
+    for (const file of Array.from(files)) {
+      const progressItem = document.createElement('div');
+      progressItem.className = 'flex items-center gap-3 text-sm';
+      progressItem.innerHTML = `
+        <div class="h-1.5 flex-1 rounded-full bg-border overflow-hidden">
+          <div class="h-full w-0 bg-accent transition-all" data-progress-bar></div>
+        </div>
+        <span class="text-xs text-text-muted w-20 truncate">${file.name}</span>
+        <span class="text-xs text-text-muted" data-status>Uploading...</span>
+      `;
+      progressEl.appendChild(progressItem);
+
+      const bar = progressItem.querySelector('[data-progress-bar]');
+      const statusEl = progressItem.querySelector('[data-status]');
+
+      try {
+        const formData = new FormData();
+        formData.append('files', file);
+
+        // Get Clerk token for UploadThing auth
+        // Since we're in admin (Clerk protected), use window.__clerk__ or session storage
+        // The token is passed via Authorization header
+        const tokenResponse = await fetch('/__clerk/getToken', { method: 'POST' }).catch(() => null);
+        let token = '';
+        if (tokenResponse?.ok) {
+          const data = await tokenResponse.json();
+          token = data.token ?? '';
+        }
+
+        bar.style.width = '30%';
+
+        const res = await fetch('/api/uploadthing', {
+          method: 'POST',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: formData,
+        });
+
+        bar.style.width = '80%';
+
+        if (!res.ok) throw new Error('Upload failed');
+        const data = await res.json();
+        const uploaded = Array.isArray(data) ? data[0] : data;
+
+        await convex.mutation(api.media.registerUpload, {
+          eventId: id,
+          uploadthingKey: uploaded.uploadthingKey ?? uploaded.key,
+          uploadthingUrl: uploaded.uploadthingUrl ?? uploaded.url,
+          filename: file.name,
+          mimeType: file.type,
+          sizeBytes: file.size,
+          sortOrder: sortOrder++,
+        });
+
+        bar.style.width = '100%';
+        statusEl.textContent = 'Done';
+      } catch (err) {
+        statusEl.textContent = 'Failed';
+        bar.classList.replace('bg-accent', 'bg-red-500');
+      }
+    }
+
+    fileInput.value = '';
+    setTimeout(() => {
+      progressEl.innerHTML = '';
+      progressEl.classList.add('hidden');
+    }, 3000);
+  }
+
+  // Access codes
+  const eventIdForCodes = id;
+
+  convex.onUpdate(api.accessCodes.listByEvent, { eventId: eventIdForCodes }, (codes) => {
+    const list = document.getElementById('codes-list');
+    const empty = document.getElementById('codes-empty');
+
+    if (!codes || codes.length === 0) {
+      list.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+    list.innerHTML = codes.map(c => `
+      <div class="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2.5 ${c.isRevoked ? 'opacity-50' : ''}">
+        <div>
+          <p class="font-mono text-sm font-bold text-primary">${c.code}</p>
+          ${c.label ? `<p class="text-xs text-text-muted">${c.label}</p>` : ''}
+          <p class="text-xs text-text-muted">${c.usageCount} uses${c.maxUses ? ` / ${c.maxUses}` : ''}</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            class="text-xs text-text-muted hover:text-primary"
+            data-copy="${c.code}"
+            title="Copy code"
+          >
+            <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+          </button>
+          ${!c.isRevoked ? `
+            <button
+              class="text-xs text-red-400 hover:text-red-600"
+              data-revoke="${c._id}"
+              title="Revoke"
+            >
+              <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+            </button>
+          ` : '<span class="text-xs text-text-muted">Revoked</span>'}
+        </div>
+      </div>
+    `).join('');
+
+    list.querySelectorAll('[data-copy]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        navigator.clipboard.writeText(btn.dataset.copy);
+        btn.title = 'Copied!';
+        setTimeout(() => { btn.title = 'Copy code'; }, 1500);
+      });
+    });
+
+    list.querySelectorAll('[data-revoke]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Revoke this code? Users with this code will lose access.')) return;
+        await convex.mutation(api.accessCodes.revoke, { codeId: btn.dataset.revoke });
+      });
+    });
+  });
+
+  document.getElementById('generate-code-btn').addEventListener('click', async () => {
+    await convex.mutation(api.accessCodes.create, { eventId: id });
+  });
+</script>

@@ -2,39 +2,36 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
-import Banner from '../../components/Banner.astro';
 import { brand } from '../../config/brand';
 import { client } from '../../data/client';
 ---
 
-<BaseLayout title="Contact" description={`Get in touch with ${brand.name}. Request a free quote or ask us a question.`}>
+<BaseLayout title="Contact" description={`Get in touch with ${brand.name} to book event coverage or ask a question.`}>
   <Header slot="header" />
 
-  <Banner title="Contact Us" />
+  <div class="bg-primary text-primary-fg py-12 px-4 sm:px-6">
+    <div class="mx-auto max-w-site">
+      <p class="text-sm font-semibold uppercase tracking-widest text-accent font-heading">Get in Touch</p>
+      <h1 class="mt-2 text-h1 font-heading font-bold uppercase">Contact Us</h1>
+    </div>
+  </div>
 
-  <section class="py-section">
+  <section class="py-16">
     <div class="mx-auto grid max-w-site grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-5 lg:gap-14">
 
       <!-- Form -->
       <div class="lg:col-span-3">
         <h2 class="font-heading text-h2 font-bold uppercase text-text">Send us a message</h2>
         <p class="mt-2 mb-8 text-text-muted">
-          Fill out the form below and we'll get back to you within one business day.
+          Tell us about your event and we'll get back to you within one business day.
         </p>
 
         <form
-          name="contact"
-          method="POST"
-          data-netlify="true"
-          netlify-honeypot="bot-field"
-          action="/contact/success"
+          action={`mailto:${client.email}`}
+          method="GET"
+          enctype="text/plain"
           class="flex flex-col gap-5"
         >
-          <input type="hidden" name="form-name" value="contact" />
-          <p class="hidden" aria-hidden="true">
-            <label>Leave this empty: <input name="bot-field" tabindex="-1" autocomplete="off" /></label>
-          </p>
-
           <label class="flex flex-col gap-1.5">
             <span class="text-sm font-medium text-text">Name <span class="text-accent" aria-hidden="true">*</span></span>
             <input
@@ -42,7 +39,7 @@ import { client } from '../../data/client';
               name="name"
               required
               autocomplete="name"
-              class="min-h-[44px] rounded-md border border-border bg-background px-4 py-2.5 text-text transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              class="min-h-[44px] rounded-md border border-border bg-background px-4 py-2.5 text-text transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
             />
           </label>
 
@@ -53,34 +50,24 @@ import { client } from '../../data/client';
               name="email"
               required
               autocomplete="email"
-              class="min-h-[44px] rounded-md border border-border bg-background px-4 py-2.5 text-text transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              class="min-h-[44px] rounded-md border border-border bg-background px-4 py-2.5 text-text transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
             />
           </label>
 
           <label class="flex flex-col gap-1.5">
-            <span class="text-sm font-medium text-text">Phone</span>
-            <input
-              type="tel"
-              name="phone"
-              autocomplete="tel"
-              inputmode="tel"
-              class="min-h-[44px] rounded-md border border-border bg-background px-4 py-2.5 text-text transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-          </label>
-
-          <label class="flex flex-col gap-1.5">
-            <span class="text-sm font-medium text-text">Message <span class="text-accent" aria-hidden="true">*</span></span>
+            <span class="text-sm font-medium text-text">Event details / Message <span class="text-accent" aria-hidden="true">*</span></span>
             <textarea
-              name="message"
+              name="body"
               rows="5"
               required
-              class="min-h-[120px] rounded-md border border-border bg-background px-4 py-2.5 text-text transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 resize-y"
+              placeholder="Tell us about your event — date, location, team, type of coverage you're looking for..."
+              class="min-h-[120px] rounded-md border border-border bg-background px-4 py-2.5 text-text transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 resize-y"
             ></textarea>
           </label>
 
           <button
             type="submit"
-            class="mt-2 inline-flex min-h-[44px] cursor-pointer items-center justify-center self-start rounded-md bg-accent px-8 py-3 text-base font-bold text-accent-fg shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            class="mt-2 inline-flex min-h-[44px] cursor-pointer items-center justify-center self-start rounded-md bg-accent px-8 py-3 text-base font-bold text-accent-fg shadow-sm transition-opacity hover:opacity-90"
           >
             Send Message
           </button>
@@ -90,41 +77,31 @@ import { client } from '../../data/client';
       <!-- Contact info sidebar -->
       <aside class="space-y-8 lg:col-span-2">
         <div>
-          <h3 class="font-heading text-lg font-semibold text-text">Call Us</h3>
-          <a href={`tel:${client.phoneForTel}`} class="mt-1 block text-primary-light font-medium transition-colors hover:text-primary">
-            {client.phoneFormatted}
-          </a>
-        </div>
-
-        <div>
-          <h3 class="font-heading text-lg font-semibold text-text">Email Us</h3>
-          <a href={`mailto:${client.email}`} class="mt-1 block text-primary-light font-medium transition-colors hover:text-primary">
+          <h3 class="font-heading text-lg font-semibold text-text">Email</h3>
+          <a href={`mailto:${client.email}`} class="mt-1 block font-medium text-primary transition-colors hover:text-primary-light">
             {client.email}
           </a>
         </div>
 
         <div>
-          <h3 class="font-heading text-lg font-semibold text-text">Visit Us</h3>
-          <a
-            href={client.address.mapLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="mt-1 block text-text-muted transition-colors hover:text-text"
-          >
-            {client.address.lineOne}<br />
-            {client.address.lineTwo && <>{client.address.lineTwo}<br /></>}
-            {client.address.city}, {client.address.state} {client.address.zip}
-          </a>
+          <h3 class="font-heading text-lg font-semibold text-text">Response Time</h3>
+          <p class="mt-1 text-text-muted">We typically respond within 24 hours on business days.</p>
         </div>
 
         <div>
-          <h3 class="font-heading text-lg font-semibold text-text">Hours</h3>
-          <p class="mt-1 text-text-muted">
-            Mon – Fri: 7:00 AM – 6:00 PM<br />
-            Sat: 8:00 AM – 2:00 PM<br />
-            Sun: Closed<br />
-            <span class="font-medium text-accent">24/7 Emergency Service Available</span>
-          </p>
+          <h3 class="font-heading text-lg font-semibold text-text">Follow Us</h3>
+          <div class="mt-3 flex gap-4">
+            {client.socials.instagram && (
+              <a href={client.socials.instagram} target="_blank" rel="noopener noreferrer" class="text-text-muted hover:text-primary transition-colors">
+                Instagram
+              </a>
+            )}
+            {client.socials.facebook && (
+              <a href={client.socials.facebook} target="_blank" rel="noopener noreferrer" class="text-text-muted hover:text-primary transition-colors">
+                Facebook
+              </a>
+            )}
+          </div>
         </div>
       </aside>
     </div>

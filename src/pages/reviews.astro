@@ -2,52 +2,43 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import Banner from '../components/Banner.astro';
-import CTA from '../components/CTA.astro';
 import { brand } from '../config/brand';
-import { client } from '../data/client';
 
 const reviews = [
-  { quote: 'They showed up on time, explained everything clearly, and finished the job faster than expected. Best service experience we\'ve had.', name: 'Sarah M.', location: 'Denver, CO', rating: 5 },
-  { quote: 'Honest pricing and top-notch work. I\'ve used them for three different projects now and they never disappoint.', name: 'James R.', location: 'Aurora, CO', rating: 5 },
-  { quote: 'Our emergency call was answered in minutes. They had the problem fixed before dinner. Truly dependable.', name: 'Linda K.', location: 'Lakewood, CO', rating: 5 },
-  { quote: 'The remodel turned out even better than we imagined. Professional, clean, and on budget. We couldn\'t be happier.', name: 'Tom & Beth P.', location: 'Boulder, CO', rating: 5 },
-  { quote: 'Great communication from start to finish. They sent photos of the progress and cleaned up perfectly when done.', name: 'Anita W.', location: 'Littleton, CO', rating: 5 },
-  { quote: 'I appreciate the upfront pricing — no hidden fees or surprise charges. That\'s rare these days. Highly recommend.', name: 'Marcus D.', location: 'Arvada, CO', rating: 5 },
+  { quote: 'The photos from my son\'s tournament were absolutely incredible. Every parent on the team ordered prints. 1822 Media captured moments we\'ll treasure forever.', name: 'Sarah M.', role: 'Parent, U14 Team', rating: 5 },
+  { quote: 'We use 1822 Media for all of our home games. The turnaround is fast and the quality is professional. Our players love seeing themselves in action.', name: 'Coach Rivera', role: 'Head Coach, 1822 Lacrosse', rating: 5 },
+  { quote: 'My daughter got a scholarship offer and her highlight video from 1822 Media was a huge part of that. The editing is top notch.', name: 'James T.', role: 'Parent, Club Player', rating: 5 },
+  { quote: 'Easy to access, easy to download. The gallery system is so much better than just getting a link to a Google Drive. Love the access code setup.', name: 'Melissa C.', role: 'Team Manager', rating: 5 },
+  { quote: 'Best lacrosse photography we\'ve had in 5 years of playing club. Sharp images, great angles, and they actually capture the game — not just posed shots.', name: 'David & Karen P.', role: 'Parents, Twin Players', rating: 5 },
+  { quote: 'The branded graphics for our tournament program were fire. Our players were hyped to see themselves on the cover. Will 100% book again.', name: 'Marcus W.', role: 'Club Director', rating: 5 },
 ];
 ---
 
 <BaseLayout
   title="Reviews"
-  description={`Read reviews and testimonials from ${brand.name} customers. See why homeowners trust us for their projects.`}
-  schema={{
-    '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
-    name: client.name,
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '5',
-      reviewCount: String(reviews.length),
-      bestRating: '5',
-    },
-  }}
+  description={`Read reviews from 1822 Lacrosse families and coaches about ${brand.name} photography services.`}
 >
   <Header slot="header" />
 
-  <Banner title="Customer Reviews" />
+  <div class="bg-primary text-primary-fg py-12 px-4 sm:px-6">
+    <div class="mx-auto max-w-site">
+      <p class="text-sm font-semibold uppercase tracking-widest text-accent font-heading">Testimonials</p>
+      <h1 class="mt-2 text-h1 font-heading font-bold uppercase">What Families Say</h1>
+    </div>
+  </div>
 
-  <section class="py-section">
+  <section class="py-16">
     <div class="mx-auto max-w-site px-4 sm:px-6">
-      <div class="mx-auto mb-10 max-w-2xl text-center lg:mb-14">
-        <h2 class="font-heading text-h2 font-bold uppercase text-text">What people are saying</h2>
+      <div class="mx-auto mb-10 max-w-2xl text-center">
+        <h2 class="font-heading text-h2 font-bold uppercase text-text">Trusted by 1822 Lacrosse families</h2>
         <p class="mt-3 text-text-muted leading-relaxed">
-          Don't take our word for it — hear from the homeowners we've helped.
+          Here's what players, parents, and coaches say about 1822 Media.
         </p>
       </div>
 
       <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {reviews.map(({ quote, name, location, rating = 5 }) => (
-          <div class="flex flex-col rounded-lg border border-border bg-background p-6 shadow-sm">
+        {reviews.map(({ quote, name, role, rating }) => (
+          <div class="flex flex-col rounded-xl border border-border bg-background p-6 shadow-sm">
             <div class="mb-4 flex gap-0.5" aria-label={`Rated ${rating} out of 5 stars`}>
               {Array.from({ length: 5 }).map((_, i) => (
                 <svg
@@ -65,7 +56,7 @@ const reviews = [
             </blockquote>
             <div class="mt-4 border-t border-border pt-4">
               <p class="font-semibold text-text">{name}</p>
-              <p class="text-sm text-text-muted">{location}</p>
+              <p class="text-sm text-text-muted">{role}</p>
             </div>
           </div>
         ))}
@@ -73,7 +64,14 @@ const reviews = [
     </div>
   </section>
 
-  <CTA />
+  <section class="bg-primary py-16">
+    <div class="mx-auto max-w-site px-4 text-center sm:px-6">
+      <h2 class="text-h2 font-heading font-bold uppercase text-primary-fg">See the galleries for yourself</h2>
+      <a href="/gallery" class="mt-8 inline-flex min-h-[52px] items-center rounded-md bg-accent px-10 py-3 text-base font-bold text-accent-fg transition-opacity hover:opacity-90">
+        Browse Galleries
+      </a>
+    </div>
+  </section>
 
   <Footer slot="footer" />
 </BaseLayout>

@@ -1,0 +1,137 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import { brand } from '../../../config/brand';
+
+const { slug } = Astro.params;
+---
+
+<BaseLayout title={`Purchase Access — ${brand.name}`} description="Purchase access to this event gallery.">
+  <Header slot="header" />
+
+  <section class="min-h-screen bg-surface py-16">
+    <div class="mx-auto max-w-lg px-4 sm:px-6">
+      <div class="rounded-xl border border-border bg-background p-8 shadow-sm">
+        <a href={`/gallery/${slug}`} class="inline-flex items-center gap-1.5 text-sm text-text-muted hover:text-primary transition-colors mb-6">
+          <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+          Back to gallery
+        </a>
+
+        <div id="event-loading" class="animate-pulse space-y-3">
+          <div class="h-6 w-48 rounded bg-border"></div>
+          <div class="h-4 w-32 rounded bg-border"></div>
+        </div>
+
+        <div id="event-info" class="hidden">
+          <p class="font-heading text-sm font-semibold uppercase tracking-widest text-accent" id="event-date-label"></p>
+          <h1 class="mt-1 text-h2 font-heading font-bold uppercase text-primary" id="event-title-label"></h1>
+          <p class="mt-4 text-2xl font-bold text-primary" id="event-price-label"></p>
+          <p class="mt-1 text-sm text-text-muted">One-time purchase · Full team access</p>
+        </div>
+
+        <div id="not-purchasable" class="hidden text-center py-4">
+          <p class="text-text-muted">This event does not require a purchase.</p>
+          <a href={`/gallery/${slug}`} class="mt-3 inline-block text-sm font-semibold text-primary hover:underline">View Gallery</a>
+        </div>
+
+        <form id="checkout-form" class="mt-8 hidden">
+          <label for="buyer-email" class="block text-sm font-medium text-text">Your email address</label>
+          <p class="mt-0.5 text-xs text-text-muted">Your access code will be shown after payment.</p>
+          <input
+            type="email"
+            id="buyer-email"
+            name="email"
+            required
+            placeholder="team@example.com"
+            class="mt-2 w-full rounded-md border border-border bg-surface px-4 py-3 text-sm text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+          />
+          <p id="checkout-error" class="mt-2 hidden text-sm text-red-600"></p>
+          <button
+            type="submit"
+            class="mt-6 w-full rounded-md bg-accent py-3 text-base font-bold text-accent-fg transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            Continue to Payment
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <Footer slot="footer" />
+</BaseLayout>
+
+<script define:vars={{ slug }}>
+  import { ConvexClient } from 'convex/browser';
+  import { api } from '../../../../convex/_generated/api';
+
+  const convex = new ConvexClient(import.meta.env.PUBLIC_CONVEX_URL);
+
+  const els = {
+    loading: document.getElementById('event-loading'),
+    info: document.getElementById('event-info'),
+    notPurchasable: document.getElementById('not-purchasable'),
+    form: document.getElementById('checkout-form'),
+    dateLabel: document.getElementById('event-date-label'),
+    titleLabel: document.getElementById('event-title-label'),
+    priceLabel: document.getElementById('event-price-label'),
+    error: document.getElementById('checkout-error'),
+  };
+
+  let currentEventId = null;
+
+  async function init() {
+    const event = await convex.query(api.events.getBySlug, { slug });
+    els.loading.classList.add('hidden');
+
+    if (!event) {
+      els.notPurchasable.classList.remove('hidden');
+      els.notPurchasable.querySelector('p').textContent = 'Event not found.';
+      return;
+    }
+
+    currentEventId = event._id;
+
+    if (event.isFree || !event.stripePriceId) {
+      els.notPurchasable.classList.remove('hidden');
+      return;
+    }
+
+    els.dateLabel.textContent = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(event.eventDate));
+    els.titleLabel.textContent = event.title;
+    els.priceLabel.textContent = event.priceAmountCents
+      ? `$${(event.priceAmountCents / 100).toFixed(2)}`
+      : 'Paid Access';
+    els.info.classList.remove('hidden');
+    els.form.classList.remove('hidden');
+  }
+
+  document.getElementById('checkout-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('buyer-email').value.trim();
+    if (!email) return;
+
+    els.error.classList.add('hidden');
+    const btn = e.currentTarget.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Redirecting to payment...';
+
+    try {
+      const origin = window.location.origin;
+      const result = await convex.action(api.payments.createCheckout, {
+        eventId: currentEventId,
+        buyerEmail: email,
+        successUrl: `${origin}/gallery/${slug}/success`,
+        cancelUrl: `${origin}/gallery/${slug}/checkout`,
+      });
+      window.location.href = result.url;
+    } catch (err) {
+      els.error.textContent = 'Payment setup failed. Please try again.';
+      els.error.classList.remove('hidden');
+      btn.disabled = false;
+      btn.textContent = 'Continue to Payment';
+    }
+  });
+
+  init();
+</script>
