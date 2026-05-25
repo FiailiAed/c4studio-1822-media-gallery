@@ -10,7 +10,7 @@ const { slug } = Astro.params;
 <BaseLayout title={`Gallery — ${brand.name}`} description="View and download event photos. Enter your team access code to unlock full resolution images.">
   <Header slot="header" />
 
-  <section class="min-h-screen bg-surface">
+  <section class="min-h-screen bg-surface" data-slug={slug}>
     <!-- Event header (populated by JS) -->
     <div id="event-header" class="bg-primary text-primary-fg py-12 px-4 sm:px-6">
       <div class="mx-auto max-w-site">
@@ -98,10 +98,11 @@ const { slug } = Astro.params;
   <Footer slot="footer" />
 </BaseLayout>
 
-<script define:vars={{ slug }}>
+<script>
   import { ConvexClient } from 'convex/browser';
   import { api } from '../../../convex/_generated/api';
 
+  const slug = (document.querySelector('section[data-slug]') as HTMLElement)?.dataset.slug ?? '';
   const convex = new ConvexClient(import.meta.env.PUBLIC_CONVEX_URL);
 
   const STORAGE_KEY = `1822_access_${slug}`;
