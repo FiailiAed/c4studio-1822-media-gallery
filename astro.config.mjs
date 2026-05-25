@@ -38,5 +38,11 @@ export default defineConfig({
     build: {
       cssMinify: 'lightningcss',
     },
+    optimizeDeps: {
+      include: [
+        'convex/browser',
+        'convex/server',
+      ],
+    },
   },
 });
