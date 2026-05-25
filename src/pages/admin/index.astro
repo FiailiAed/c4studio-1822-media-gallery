@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
+import { SignOutButton } from '@clerk/astro/components';
 import { brand } from '../../config/brand';
 ---
 
@@ -15,13 +16,21 @@ import { brand } from '../../config/brand';
           <h1 class="text-h1 font-heading font-bold uppercase text-primary">Dashboard</h1>
           <p class="text-text-muted">Manage events, media, and access codes.</p>
         </div>
-        <a
-          href="/admin/events/new"
-          class="inline-flex items-center gap-2 rounded-md bg-accent px-5 py-2.5 text-sm font-bold text-accent-fg transition-opacity hover:opacity-90"
-        >
-          <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-          New Event
-        </a>
+        <div class="flex items-center gap-3">
+          <a
+            href="/admin/events/new"
+            class="inline-flex items-center gap-2 rounded-md bg-accent px-5 py-2.5 text-sm font-bold text-accent-fg transition-opacity hover:opacity-90"
+          >
+            <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+            New Event
+          </a>
+          <SignOutButton
+            redirectUrl="/"
+            class="inline-flex items-center rounded-md border border-border px-4 py-2.5 text-sm font-medium text-text-muted hover:text-text hover:bg-surface transition-colors"
+          >
+            Sign Out
+          </SignOutButton>
+        </div>
       </div>
 
       <!-- Stats (populated by JS) -->
@@ -80,6 +89,7 @@ import { brand } from '../../config/brand';
 
 <script>
   import { ConvexClient } from 'convex/browser';
+  import { $sessionStore } from '@clerk/astro/client';
   import { api } from '../../../convex/_generated/api';
 
   const convex = new ConvexClient(import.meta.env.PUBLIC_CONVEX_URL as string);
@@ -88,56 +98,65 @@ import { brand } from '../../config/brand';
     return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(ts));
   }
 
-  // Revenue summary
-  convex.onUpdate(api.purchases.getRevenueSummary, {}, (data) => {
-    document.getElementById('stats-loading')!.classList.add('hidden');
-    document.getElementById('stats-grid')!.classList.remove('hidden');
-    document.getElementById('stat-revenue')!.textContent =
-      data ? `$${(data.totalCents / 100).toFixed(2)}` : '$0.00';
-    document.getElementById('stat-purchases')!.textContent =
-      data ? String(data.purchases.length) : '0';
+  let initialized = false;
+  const unsub = $sessionStore.subscribe((session) => {
+    if (!session || initialized) return;
+    initialized = true;
+    unsub();
 
-    const list = document.getElementById('purchases-list')!;
-    const empty = document.getElementById('purchases-empty')!;
-    document.getElementById('purchases-loading')!.classList.add('hidden');
+    convex.setAuth((forceRefresh) =>
+      (session as any).getToken({ template: 'convex', skipCache: forceRefresh ?? false }).then((t: string | null) => t ?? null)
+    );
 
-    if (!data || data.purchases.length === 0) {
-      empty.classList.remove('hidden');
-      return;
-    }
-    list.classList.remove('hidden');
-    list.innerHTML = data.purchases.slice(0, 10).map(p => `
-      <div class="flex items-center justify-between rounded-lg border border-border bg-background px-4 py-3">
-        <div>
-          <p class="text-sm font-medium text-text">${p.buyerEmail}</p>
-          <p class="text-xs text-text-muted">${formatDate(p.createdAt)}</p>
+    convex.onUpdate(api.purchases.getRevenueSummary, {}, (data) => {
+      document.getElementById('stats-loading')!.classList.add('hidden');
+      document.getElementById('stats-grid')!.classList.remove('hidden');
+      document.getElementById('stat-revenue')!.textContent =
+        data ? `$${(data.totalCents / 100).toFixed(2)}` : '$0.00';
+      document.getElementById('stat-purchases')!.textContent =
+        data ? String(data.purchases.length) : '0';
+
+      const list = document.getElementById('purchases-list')!;
+      const empty = document.getElementById('purchases-empty')!;
+      document.getElementById('purchases-loading')!.classList.add('hidden');
+
+      if (!data || data.purchases.length === 0) {
+        empty.classList.remove('hidden');
+        return;
+      }
+      list.classList.remove('hidden');
+      list.innerHTML = data.purchases.slice(0, 10).map((p: any) => `
+        <div class="flex items-center justify-between rounded-lg border border-border bg-background px-4 py-3">
+          <div>
+            <p class="text-sm font-medium text-text">${p.buyerEmail}</p>
+            <p class="text-xs text-text-muted">${formatDate(p.createdAt)}</p>
+          </div>
+          <span class="text-sm font-semibold text-primary">$${(p.amountCents / 100).toFixed(2)}</span>
         </div>
-        <span class="text-sm font-semibold text-primary">$${(p.amountCents / 100).toFixed(2)}</span>
-      </div>
-    `).join('');
-  });
+      `).join('');
+    });
 
-  // Events list
-  convex.onUpdate(api.events.listAll, {}, (events) => {
-    document.getElementById('stat-events')!.textContent = events ? String(events.length) : '0';
-    document.getElementById('events-loading')!.classList.add('hidden');
+    convex.onUpdate(api.events.listAll, {}, (events) => {
+      document.getElementById('stat-events')!.textContent = events ? String(events.length) : '0';
+      document.getElementById('events-loading')!.classList.add('hidden');
 
-    const list = document.getElementById('events-list')!;
-    list.classList.remove('hidden');
-    if (!events || events.length === 0) {
-      list.innerHTML = '<p class="text-text-muted text-sm text-center py-4">No events yet. <a href="/admin/events/new" class="text-primary underline">Create one</a>.</p>';
-      return;
-    }
-    list.innerHTML = events.slice(0, 5).map(e => `
-      <a href="/admin/events/${e._id}" class="flex items-center justify-between rounded-lg border border-border bg-background px-4 py-3 hover:border-accent transition-colors group">
-        <div>
-          <p class="text-sm font-semibold text-text group-hover:text-primary">${e.title}</p>
-          <p class="text-xs text-text-muted">${formatDate(e.eventDate)} &middot; ${e.mediaCount} photos</p>
-        </div>
-        <span class="text-xs rounded-full px-2 py-0.5 ${e.isPublished ? 'bg-accent/20 text-primary' : 'bg-border text-text-muted'}">
-          ${e.isPublished ? 'Published' : 'Draft'}
-        </span>
-      </a>
-    `).join('');
+      const list = document.getElementById('events-list')!;
+      list.classList.remove('hidden');
+      if (!events || events.length === 0) {
+        list.innerHTML = '<p class="text-text-muted text-sm text-center py-4">No events yet. <a href="/admin/events/new" class="text-primary underline">Create one</a>.</p>';
+        return;
+      }
+      list.innerHTML = events.slice(0, 5).map((e: any) => `
+        <a href="/admin/events/${e._id}" class="flex items-center justify-between rounded-lg border border-border bg-background px-4 py-3 hover:border-accent transition-colors group">
+          <div>
+            <p class="text-sm font-semibold text-text group-hover:text-primary">${e.title}</p>
+            <p class="text-xs text-text-muted">${formatDate(e.eventDate)} &middot; ${e.mediaCount} photos</p>
+          </div>
+          <span class="text-xs rounded-full px-2 py-0.5 ${e.isPublished ? 'bg-accent/20 text-primary' : 'bg-border text-text-muted'}">
+            ${e.isPublished ? 'Published' : 'Draft'}
+          </span>
+        </a>
+      `).join('');
+    });
   });
 </script>

@@ -2,6 +2,7 @@
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import Header from '../../../components/Header.astro';
 import Footer from '../../../components/Footer.astro';
+import { SignOutButton } from '@clerk/astro/components';
 import { brand } from '../../../config/brand';
 ---
 
@@ -10,8 +11,16 @@ import { brand } from '../../../config/brand';
 
   <section class="min-h-screen bg-surface py-10">
     <div class="mx-auto max-w-2xl px-4 sm:px-6">
-      <a href="/admin/events" class="text-sm text-text-muted hover:text-primary transition-colors">&larr; All Events</a>
-      <h1 class="mt-4 text-h1 font-heading font-bold uppercase text-primary">Create Event</h1>
+      <div class="flex items-center justify-between mb-6">
+        <a href="/admin/events" class="text-sm text-text-muted hover:text-primary transition-colors">&larr; All Events</a>
+        <SignOutButton
+          redirectUrl="/"
+          class="inline-flex items-center rounded-md border border-border px-4 py-2 text-sm font-medium text-text-muted hover:text-text hover:bg-surface transition-colors"
+        >
+          Sign Out
+        </SignOutButton>
+      </div>
+      <h1 class="text-h1 font-heading font-bold uppercase text-primary">Create Event</h1>
 
       <form id="event-form" class="mt-8 space-y-6 rounded-xl border border-border bg-background p-8">
         <div>
@@ -145,9 +154,18 @@ import { brand } from '../../../config/brand';
 
 <script>
   import { ConvexClient } from 'convex/browser';
+  import { $sessionStore } from '@clerk/astro/client';
   import { api } from '../../../../convex/_generated/api';
 
   const convex = new ConvexClient(import.meta.env.PUBLIC_CONVEX_URL as string);
+
+  // Set Convex auth as soon as Clerk session is available
+  $sessionStore.subscribe((session) => {
+    if (!session) return;
+    convex.setAuth((forceRefresh) =>
+      (session as any).getToken({ template: 'convex', skipCache: forceRefresh ?? false }).then((t: string | null) => t ?? null)
+    );
+  });
 
   // Auto-generate slug from title
   const titleInput = document.getElementById('title') as HTMLInputElement;

@@ -2,6 +2,7 @@
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import Header from '../../../components/Header.astro';
 import Footer from '../../../components/Footer.astro';
+import { SignOutButton } from '@clerk/astro/components';
 import { brand } from '../../../config/brand';
 
 const { id } = Astro.params;
@@ -10,17 +11,26 @@ const { id } = Astro.params;
 <BaseLayout title={`Edit Event — Admin — ${brand.name}`} description="Edit event, upload media, manage access codes.">
   <Header slot="header" />
 
-  <section class="min-h-screen bg-surface py-10">
+  <!-- Pass event ID to client script via data attribute -->
+  <section class="min-h-screen bg-surface py-10" data-event-id={id}>
     <div class="mx-auto max-w-site px-4 sm:px-6">
-      <div class="mb-6">
-        <a href="/admin/events" class="text-sm text-text-muted hover:text-primary transition-colors">&larr; All Events</a>
-        <div id="event-title-bar" class="mt-2 flex items-center justify-between">
-          <div id="title-skeleton" class="animate-pulse h-8 w-64 rounded bg-border"></div>
-          <div id="title-content" class="hidden flex items-center gap-3">
-            <h1 id="page-title" class="text-h1 font-heading font-bold uppercase text-primary"></h1>
-            <a id="view-gallery-link" href="#" class="text-sm text-primary hover:underline" target="_blank">View gallery &rarr;</a>
+      <div class="mb-6 flex items-start justify-between">
+        <div>
+          <a href="/admin/events" class="text-sm text-text-muted hover:text-primary transition-colors">&larr; All Events</a>
+          <div id="event-title-bar" class="mt-2">
+            <div id="title-skeleton" class="animate-pulse h-8 w-64 rounded bg-border"></div>
+            <div id="title-content" class="hidden flex items-center gap-3">
+              <h1 id="page-title" class="text-h1 font-heading font-bold uppercase text-primary"></h1>
+              <a id="view-gallery-link" href="#" class="text-sm text-primary hover:underline" target="_blank">View gallery &rarr;</a>
+            </div>
           </div>
         </div>
+        <SignOutButton
+          redirectUrl="/"
+          class="inline-flex items-center rounded-md border border-border px-4 py-2 text-sm font-medium text-text-muted hover:text-text hover:bg-surface transition-colors mt-1"
+        >
+          Sign Out
+        </SignOutButton>
       </div>
 
       <div class="grid gap-8 lg:grid-cols-3">
@@ -109,109 +119,176 @@ const { id } = Astro.params;
   <Footer slot="footer" />
 </BaseLayout>
 
-<script define:vars={{ id }}>
+<script>
   import { ConvexClient } from 'convex/browser';
+  import { $sessionStore } from '@clerk/astro/client';
   import { api } from '../../../../convex/_generated/api';
 
-  const convex = new ConvexClient(import.meta.env.PUBLIC_CONVEX_URL);
+  // Read event ID from data attribute (avoids define:vars + import conflict)
+  const id = (document.querySelector('section[data-event-id]') as HTMLElement)?.dataset.eventId ?? '';
 
-  let currentEvent = null;
+  const convex = new ConvexClient(import.meta.env.PUBLIC_CONVEX_URL as string);
 
-  function formatDate(ts) {
+  let currentEvent: any = null;
+  let clerkSession: any = null;
+
+  function formatDate(ts: number): string {
     return new Date(ts).toISOString().split('T')[0];
   }
 
-  // Load event data
-  convex.onUpdate(api.events.get, { eventId: id }, (event) => {
-    if (!event) return;
-    currentEvent = event;
+  let initialized = false;
+  const unsub = $sessionStore.subscribe((session) => {
+    if (!session || initialized) return;
+    initialized = true;
+    unsub();
 
-    document.getElementById('title-skeleton').classList.add('hidden');
-    document.getElementById('title-content').classList.remove('hidden');
-    document.getElementById('page-title').textContent = event.title;
-    document.getElementById('view-gallery-link').href = `/gallery/${event.slug}`;
+    clerkSession = session;
 
-    document.getElementById('edit-title').value = event.title;
-    document.getElementById('edit-location').value = event.location ?? '';
-    document.getElementById('edit-date').value = formatDate(event.eventDate);
-    document.getElementById('edit-published').checked = event.isPublished;
-    document.getElementById('edit-free').checked = event.isFree;
+    convex.setAuth((forceRefresh) =>
+      (session as any).getToken({ template: 'convex', skipCache: forceRefresh ?? false }).then((t: string | null) => t ?? null)
+    );
+
+    // Load event data
+    convex.onUpdate(api.events.get, { eventId: id as any }, (event) => {
+      if (!event) return;
+      currentEvent = event;
+
+      document.getElementById('title-skeleton')!.classList.add('hidden');
+      document.getElementById('title-content')!.classList.remove('hidden');
+      (document.getElementById('page-title') as HTMLElement).textContent = event.title;
+      (document.getElementById('view-gallery-link') as HTMLAnchorElement).href = `/gallery/${event.slug}`;
+
+      (document.getElementById('edit-title') as HTMLInputElement).value = event.title;
+      (document.getElementById('edit-location') as HTMLInputElement).value = event.location ?? '';
+      (document.getElementById('edit-date') as HTMLInputElement).value = formatDate(event.eventDate);
+      (document.getElementById('edit-published') as HTMLInputElement).checked = event.isPublished;
+      (document.getElementById('edit-free') as HTMLInputElement).checked = event.isFree;
+    });
+
+    // Media list
+    convex.onUpdate(api.media.listByEvent, { eventId: id as any }, (assets) => {
+      const list = document.getElementById('media-list')!;
+      if (!assets || assets.length === 0) {
+        list.innerHTML = '';
+        return;
+      }
+      list.innerHTML = (assets as any[]).map((a) => {
+        const isVideo = a.mimeType?.startsWith('video/');
+        const thumb = isVideo
+          ? `<div class="absolute inset-0 bg-primary/10 flex items-center justify-center"><svg class="size-8 text-primary/40" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg></div>`
+          : `<img src="${a.uploadthingUrl}" alt="${a.filename}" class="absolute inset-0 h-full w-full object-cover" loading="lazy" />`;
+        return `
+          <div class="group relative aspect-square overflow-hidden rounded-lg bg-surface">
+            ${thumb}
+            <button
+              class="absolute top-1 right-1 hidden group-hover:flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-red-600 transition-colors"
+              data-asset-id="${a._id}"
+              aria-label="Delete"
+            >
+              <svg class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+        `;
+      }).join('');
+
+      list.querySelectorAll('[data-asset-id]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Delete this photo?')) return;
+          await convex.mutation(api.media.deleteAsset, { assetId: (btn as HTMLElement).dataset.assetId as any });
+        });
+      });
+    });
+
+    // Access codes
+    convex.onUpdate(api.accessCodes.listByEvent, { eventId: id as any }, (codes) => {
+      const list = document.getElementById('codes-list')!;
+      const empty = document.getElementById('codes-empty')!;
+
+      if (!codes || codes.length === 0) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      list.innerHTML = (codes as any[]).map((c) => `
+        <div class="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2.5 ${c.isRevoked ? 'opacity-50' : ''}">
+          <div>
+            <p class="font-mono text-sm font-bold text-primary">${c.code}</p>
+            ${c.label ? `<p class="text-xs text-text-muted">${c.label}</p>` : ''}
+            <p class="text-xs text-text-muted">${c.usageCount} uses${c.maxUses ? ` / ${c.maxUses}` : ''}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="text-xs text-text-muted hover:text-primary" data-copy="${c.code}" title="Copy code">
+              <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+            </button>
+            ${!c.isRevoked ? `
+              <button class="text-xs text-red-400 hover:text-red-600" data-revoke="${c._id}" title="Revoke">
+                <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+              </button>
+            ` : '<span class="text-xs text-text-muted">Revoked</span>'}
+          </div>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('[data-copy]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          navigator.clipboard.writeText((btn as HTMLElement).dataset.copy ?? '');
+          (btn as HTMLElement).title = 'Copied!';
+          setTimeout(() => { (btn as HTMLElement).title = 'Copy code'; }, 1500);
+        });
+      });
+
+      list.querySelectorAll('[data-revoke]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Revoke this code? Users with this code will lose access.')) return;
+          await convex.mutation(api.accessCodes.revoke, { codeId: (btn as HTMLElement).dataset.revoke as any });
+        });
+      });
+    });
   });
 
-  // Edit form submit
-  document.getElementById('event-edit-form').addEventListener('submit', async (e) => {
+  // Edit form submit (auth already set via $sessionStore above)
+  document.getElementById('event-edit-form')!.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const btn = e.currentTarget.querySelector('button[type="submit"]');
-    const errorEl = document.getElementById('edit-error');
+    const btn = (e.currentTarget as HTMLFormElement).querySelector('button[type="submit"]') as HTMLButtonElement;
+    const errorEl = document.getElementById('edit-error')!;
     errorEl.classList.add('hidden');
     btn.disabled = true;
     btn.textContent = 'Saving...';
 
     try {
       await convex.mutation(api.events.update, {
-        eventId: id,
-        title: document.getElementById('edit-title').value.trim(),
-        location: document.getElementById('edit-location').value.trim() || undefined,
-        eventDate: new Date(document.getElementById('edit-date').value).getTime(),
-        isPublished: document.getElementById('edit-published').checked,
-        isFree: document.getElementById('edit-free').checked,
+        eventId: id as any,
+        title: (document.getElementById('edit-title') as HTMLInputElement).value.trim(),
+        location: (document.getElementById('edit-location') as HTMLInputElement).value.trim() || undefined,
+        eventDate: new Date((document.getElementById('edit-date') as HTMLInputElement).value).getTime(),
+        isPublished: (document.getElementById('edit-published') as HTMLInputElement).checked,
+        isFree: (document.getElementById('edit-free') as HTMLInputElement).checked,
       });
       btn.textContent = 'Saved!';
       setTimeout(() => { btn.textContent = 'Save Changes'; }, 2000);
     } catch (err) {
-      errorEl.textContent = err?.message ?? 'Failed to save.';
+      errorEl.textContent = (err as Error)?.message ?? 'Failed to save.';
       errorEl.classList.remove('hidden');
     } finally {
       btn.disabled = false;
     }
   });
 
-  // Media list
-  convex.onUpdate(api.media.listByEvent, { eventId: id }, (assets) => {
-    const list = document.getElementById('media-list');
-    if (!assets || assets.length === 0) {
-      list.innerHTML = '';
-      return;
-    }
-    list.innerHTML = assets.map(a => {
-      const isVideo = a.mimeType?.startsWith('video/');
-      const thumb = isVideo
-        ? `<div class="absolute inset-0 bg-primary/10 flex items-center justify-center"><svg class="size-8 text-primary/40" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg></div>`
-        : `<img src="${a.uploadthingUrl}" alt="${a.filename}" class="absolute inset-0 h-full w-full object-cover" loading="lazy" />`;
-
-      return `
-        <div class="group relative aspect-square overflow-hidden rounded-lg bg-surface">
-          ${thumb}
-          <button
-            class="absolute top-1 right-1 hidden group-hover:flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-red-600 transition-colors"
-            data-asset-id="${a._id}"
-            data-key="${a.uploadthingKey}"
-            aria-label="Delete"
-          >
-            <svg class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
-        </div>
-      `;
-    }).join('');
-
-    // Delete handlers
-    list.querySelectorAll('[data-asset-id]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        if (!confirm('Delete this photo?')) return;
-        await convex.mutation(api.media.deleteAsset, { assetId: btn.dataset.assetId });
-      });
-    });
+  // Generate code button
+  document.getElementById('generate-code-btn')!.addEventListener('click', async () => {
+    await convex.mutation(api.accessCodes.create, { eventId: id as any });
   });
 
   // Upload zone
-  const uploadZone = document.getElementById('upload-zone');
-  const fileInput = document.getElementById('file-input');
-  const progressEl = document.getElementById('upload-progress');
+  const uploadZone = document.getElementById('upload-zone')!;
+  const fileInput = document.getElementById('file-input') as HTMLInputElement;
+  const progressEl = document.getElementById('upload-progress')!;
 
   uploadZone.addEventListener('click', () => fileInput.click());
   uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('border-accent'); });
   uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('border-accent'));
-  uploadZone.addEventListener('drop', (e) => {
+  uploadZone.addEventListener('drop', (e: DragEvent) => {
     e.preventDefault();
     uploadZone.classList.remove('border-accent');
     if (e.dataTransfer?.files) handleFiles(e.dataTransfer.files);
@@ -220,11 +297,11 @@ const { id } = Astro.params;
     if (fileInput.files) handleFiles(fileInput.files);
   });
 
-  async function handleFiles(files) {
+  async function handleFiles(files: FileList) {
     if (!currentEvent) return;
     progressEl.classList.remove('hidden');
 
-    const existingAssets = await convex.query(api.media.listByEvent, { eventId: id });
+    const existingAssets = await convex.query(api.media.listByEvent, { eventId: id as any });
     let sortOrder = existingAssets.length;
 
     for (const file of Array.from(files)) {
@@ -239,22 +316,17 @@ const { id } = Astro.params;
       `;
       progressEl.appendChild(progressItem);
 
-      const bar = progressItem.querySelector('[data-progress-bar]');
-      const statusEl = progressItem.querySelector('[data-status]');
+      const bar = progressItem.querySelector('[data-progress-bar]') as HTMLElement;
+      const statusEl = progressItem.querySelector('[data-status]') as HTMLElement;
 
       try {
+        // Get Clerk token for UploadThing auth
+        const token: string = clerkSession
+          ? (await (clerkSession as any).getToken({ template: 'convex', skipCache: false })) ?? ''
+          : '';
+
         const formData = new FormData();
         formData.append('files', file);
-
-        // Get Clerk token for UploadThing auth
-        // Since we're in admin (Clerk protected), use window.__clerk__ or session storage
-        // The token is passed via Authorization header
-        const tokenResponse = await fetch('/__clerk/getToken', { method: 'POST' }).catch(() => null);
-        let token = '';
-        if (tokenResponse?.ok) {
-          const data = await tokenResponse.json();
-          token = data.token ?? '';
-        }
 
         bar.style.width = '30%';
 
@@ -271,7 +343,7 @@ const { id } = Astro.params;
         const uploaded = Array.isArray(data) ? data[0] : data;
 
         await convex.mutation(api.media.registerUpload, {
-          eventId: id,
+          eventId: id as any,
           uploadthingKey: uploaded.uploadthingKey ?? uploaded.key,
           uploadthingUrl: uploaded.uploadthingUrl ?? uploaded.url,
           filename: file.name,
@@ -282,7 +354,7 @@ const { id } = Astro.params;
 
         bar.style.width = '100%';
         statusEl.textContent = 'Done';
-      } catch (err) {
+      } catch {
         statusEl.textContent = 'Failed';
         bar.classList.replace('bg-accent', 'bg-red-500');
       }
@@ -294,65 +366,4 @@ const { id } = Astro.params;
       progressEl.classList.add('hidden');
     }, 3000);
   }
-
-  // Access codes
-  const eventIdForCodes = id;
-
-  convex.onUpdate(api.accessCodes.listByEvent, { eventId: eventIdForCodes }, (codes) => {
-    const list = document.getElementById('codes-list');
-    const empty = document.getElementById('codes-empty');
-
-    if (!codes || codes.length === 0) {
-      list.innerHTML = '';
-      empty.classList.remove('hidden');
-      return;
-    }
-    empty.classList.add('hidden');
-    list.innerHTML = codes.map(c => `
-      <div class="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2.5 ${c.isRevoked ? 'opacity-50' : ''}">
-        <div>
-          <p class="font-mono text-sm font-bold text-primary">${c.code}</p>
-          ${c.label ? `<p class="text-xs text-text-muted">${c.label}</p>` : ''}
-          <p class="text-xs text-text-muted">${c.usageCount} uses${c.maxUses ? ` / ${c.maxUses}` : ''}</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <button
-            class="text-xs text-text-muted hover:text-primary"
-            data-copy="${c.code}"
-            title="Copy code"
-          >
-            <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-          </button>
-          ${!c.isRevoked ? `
-            <button
-              class="text-xs text-red-400 hover:text-red-600"
-              data-revoke="${c._id}"
-              title="Revoke"
-            >
-              <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
-            </button>
-          ` : '<span class="text-xs text-text-muted">Revoked</span>'}
-        </div>
-      </div>
-    `).join('');
-
-    list.querySelectorAll('[data-copy]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        navigator.clipboard.writeText(btn.dataset.copy);
-        btn.title = 'Copied!';
-        setTimeout(() => { btn.title = 'Copy code'; }, 1500);
-      });
-    });
-
-    list.querySelectorAll('[data-revoke]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        if (!confirm('Revoke this code? Users with this code will lose access.')) return;
-        await convex.mutation(api.accessCodes.revoke, { codeId: btn.dataset.revoke });
-      });
-    });
-  });
-
-  document.getElementById('generate-code-btn').addEventListener('click', async () => {
-    await convex.mutation(api.accessCodes.create, { eventId: id });
-  });
 </script>

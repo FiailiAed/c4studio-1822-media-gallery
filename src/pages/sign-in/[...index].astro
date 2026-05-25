@@ -1,0 +1,20 @@
+---
+import { SignIn } from '@clerk/astro/components';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { brand } from '../../config/brand';
+---
+
+<BaseLayout title={`Sign In — ${brand.name}`} description="Admin sign in.">
+  <div class="min-h-screen bg-surface flex flex-col items-center justify-center p-4">
+    <div class="mb-8 text-center">
+      <a
+        href="/"
+        class="font-heading text-2xl font-bold uppercase tracking-wide text-primary transition-opacity hover:opacity-80"
+      >
+        {brand.name}
+      </a>
+      <p class="mt-1 text-sm text-text-muted">Admin Portal</p>
+    </div>
+    <SignIn />
+  </div>
+</BaseLayout>
