@@ -63,10 +63,9 @@ import { brand } from '../../../config/brand';
   }
 
   let initialized = false;
-  const unsub = $sessionStore.subscribe((session) => {
+  $sessionStore.subscribe((session) => {
     if (!session || initialized) return;
     initialized = true;
-    unsub();
 
     convex.setAuth((forceRefresh) =>
       (session as any).getToken({ template: 'convex', skipCache: forceRefresh ?? false }).then((t: string | null) => t ?? null)

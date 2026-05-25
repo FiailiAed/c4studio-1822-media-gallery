@@ -137,10 +137,9 @@ const { id } = Astro.params;
   }
 
   let initialized = false;
-  const unsub = $sessionStore.subscribe((session) => {
+  $sessionStore.subscribe((session) => {
     if (!session || initialized) return;
     initialized = true;
-    unsub();
 
     clerkSession = session;
 

@@ -1,0 +1,23 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { brand } from '../config/brand';
+---
+
+<BaseLayout title={`Privacy Policy — ${brand.name}`} description="Privacy policy for 1822 Media.">
+  <Header slot="header" />
+
+  <section class="mx-auto max-w-2xl px-4 py-16 sm:px-6">
+    <h1 class="text-h1 font-heading font-bold uppercase text-primary mb-8">Privacy Policy</h1>
+    <div class="prose text-text space-y-4">
+      <p class="text-text-muted">Last updated: May 2025</p>
+      <p>1822 Media collects only the information necessary to provide you access to event galleries — including your email address when purchasing gallery access.</p>
+      <p>We do not sell or share your personal information with third parties. Payment processing is handled securely by Stripe; we do not store payment card details.</p>
+      <p>Photos and media you access through this platform are the intellectual property of 1822 Media and may not be redistributed without permission.</p>
+      <p>For questions, contact us at <a href="mailto:1822lax@gmail.com" class="text-primary hover:underline">1822lax@gmail.com</a>.</p>
+    </div>
+  </section>
+
+  <Footer slot="footer" />
+</BaseLayout>
